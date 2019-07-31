@@ -30,6 +30,9 @@
     <None Include="AccountTable_test.sql">
       <Filter>리소스 파일</Filter>
     </None>
+    <None Include="battlestagetable_test.sql">
+      <Filter>리소스 파일</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_main.cpp">

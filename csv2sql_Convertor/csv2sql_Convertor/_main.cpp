@@ -1,88 +1,84 @@
 #include <cstdio>
 #include <Windows.h>
 #include <conio.h>
-#define df_FILENAME_SIZE	128
-#define df_COLUMN_MAX		100
-#define df_COLUMN_LENGTH	30
-#define df_ROW_LENGTH		1000
+#define df_FILENAME_LEN_MAX	128		// 파일 이름 최대 길이
+#define df_COL_CNT_MAX		100		// 행 최대 개수
+#define df_COL_LEN_MAX		30		// 행 이름 최대 길이
+#define df_ROW_LEN_MAX		1000	// 열 이름 최대 길이
 
 void main()
 {
-	FILE *pfCSV, *pfSQL;
-	WCHAR szCSVName[df_FILENAME_SIZE], szSQLName[df_FILENAME_SIZE];
-
-	// WRITE FILE(*.sql) Open
-	wprintf(L"Save File(*.sql) : ");
-	wscanf_s(L"%s", szSQLName, df_FILENAME_SIZE);
-	if (wcsstr(szSQLName, L".sql") == NULL)
-		swprintf_s(szSQLName, df_FILENAME_SIZE, L"%s.sql", szSQLName);
-	if (_wfopen_s(&pfSQL, szSQLName, L"w,ccs=UTF-8") != 0)
-	{
-		wprintf(L"%s Open Fail\n", szSQLName);
-		return;
-	}
-	rewind(pfSQL);
-
 	while (1)
 	{
-		// READ FILE(*.csv) Open
-		wprintf(L"Open File(*.csv) : ");
-		wscanf_s(L"%s", szCSVName, df_FILENAME_SIZE);
-		if (wcsstr(szCSVName, L".csv") == NULL)
-			swprintf_s(szCSVName, df_FILENAME_SIZE, L"%s.csv", szCSVName);
-		if (_wfopen_s(&pfCSV, szCSVName, L"r,ccs=UTF-8") != 0)
+		////////////////////////////////////////////////////////////
+		// 파일 열기
+		//
+		// SrcFile(*.csv), DestFile(*.sql)
+		////////////////////////////////////////////////////////////
+		FILE *pFile_csv, *pFile_sql;
+		WCHAR szName_csv[df_FILENAME_LEN_MAX], szName_sql[df_FILENAME_LEN_MAX];
+
+		// TODO 1:  READ FILE(*.csv) open
+		wprintf(L" - Open File(*.csv) : ");
+		wscanf_s(L"%s", szName_csv, df_FILENAME_LEN_MAX);
+		if (wcsstr(szName_csv, L".csv") == NULL)	// add file extension
+			swprintf_s(szName_csv, df_FILENAME_LEN_MAX, L"%s.csv", szName_csv);
+		if (_wfopen_s(&pFile_csv, szName_csv, L"r,ccs=UTF-8") != 0)
 		{
-			wprintf(L"%s Open Fail\n", szCSVName);
-			break;
+			wprintf(L"%s Open Error(%d)\n", szName_csv, GetLastError());
+			continue;
+		}
+
+		// TODO 2: WRITE File(*.sql) open
+		wprintf(L" - Save File(*.sql) : ");
+		wscanf_s(L"%s", szName_sql, df_FILENAME_LEN_MAX);
+		if (wcsstr(szName_sql, L".sql") == NULL)	// add file extension
+			swprintf_s(szName_sql, df_FILENAME_LEN_MAX, L"%s.sql", szName_sql);
+		if (_wfopen_s(&pFile_sql, szName_sql, L"w,ccs=UTF-8") != 0)
+		{
+			wprintf(L"%s Open Error(%d)\n", szName_sql, GetLastError());
+			if (pFile_csv != nullptr)
+				fclose(pFile_csv);
+			continue;
 		}
 
 		/////////////////////////////////////////////////////////////////////////////////////////////
-		// Make SQL Header 
+		// SQL 헤더 만들기
+		//
+		// *.csv 파일의 첫 행은 column 이름을 나열하기로 정한다.
 		/////////////////////////////////////////////////////////////////////////////////////////////
-		WCHAR ColumnName[df_COLUMN_MAX][df_COLUMN_LENGTH];	// Header에 쓰일 Column들을 담을 Buffer. Header 생성 후에는 Value를 임시 저장
-		WCHAR wszRow[df_ROW_LENGTH];	// 파일로부터 긁어온 Row를 저장할 Buffer.
-		WCHAR *ptStart, *ptEnd;
+		WCHAR ColumnName[df_COL_CNT_MAX][df_COL_LEN_MAX];
+		WCHAR wszRow[df_ROW_LEN_MAX];
+		WCHAR *pBeginPos, *pEndPos;
 		int iColumnCnt = 0;
-		ZeroMemory(ColumnName, sizeof(ColumnName));
-		ZeroMemory(wszRow, sizeof(wszRow));
 
-		// Column Analysis
-		fgetws(wszRow, df_ROW_LENGTH, pfCSV);
-		ptStart = wszRow;
+		// TODO 3:  컬럼 개수, 컬럼 이름 저장
+		fgetws(wszRow, df_ROW_LEN_MAX, pFile_csv);
+		pBeginPos = wszRow;
 		while (1)
 		{
-			ptEnd = wcschr(ptStart, L',');
-			if (ptEnd == NULL)
+			pEndPos = wcschr(pBeginPos, L',');
+			if (pEndPos == NULL)
 			{
-				wcsncpy_s(ColumnName[iColumnCnt], sizeof(ColumnName[iColumnCnt]), ptStart, wcschr(ptStart, L'\n') - ptStart);
+				wcsncpy_s(ColumnName[iColumnCnt], sizeof(ColumnName[iColumnCnt]), pBeginPos, wcschr(pBeginPos, L'\n') - pBeginPos);
 				break;
 			}
-			wcsncpy_s(ColumnName[iColumnCnt], sizeof(ColumnName[iColumnCnt]), ptStart, ptEnd - ptStart);
-			ptStart = ptEnd + 1;
+			wcsncpy_s(ColumnName[iColumnCnt], sizeof(ColumnName[iColumnCnt]), pBeginPos, pEndPos - pBeginPos);
+			pBeginPos = pEndPos + 1;
 
 			++iColumnCnt;
 		}
 
-		// TODO : Debug :: Column Check
-		//for (int i = 0; i <= iColumnCnt; ++i)
-		//	wprintf(L"%d %s\n", i, ColumnName[i]);
-
-		// Make SQL Header
-		WCHAR wszSQLHeader[df_COLUMN_MAX * df_COLUMN_LENGTH + 500];
+		// TODO 4: SQL 헤더 만들기
+		WCHAR wszSQLHeader[df_COL_CNT_MAX * df_COL_LEN_MAX + 500];
 		WCHAR wszDBName[17], wszTableName[30];		// 오라클 기준 DB 이름 최대 길이 17, 테이블 이름 최대 길이 30
-		ZeroMemory(wszSQLHeader, sizeof(wszSQLHeader));
-		ZeroMemory(wszDBName, sizeof(wszDBName));
-		ZeroMemory(wszTableName, sizeof(wszTableName));
 
-		// DB Name Input
-		wprintf(L"Database(Schema) Name (max 17) : ");
+		wprintf(L" - DB(Schema) Name (max 17) : ");
 		wscanf_s(L"%s", wszDBName, 17);
 
-		// Table Name Input
-		wprintf(L"Table Name (max 30) : ");
+		wprintf(L" - Table Name (max 30) : ");
 		wscanf_s(L"%s", wszTableName, 30);
 
-		// Make SQL Header
 		swprintf_s(wszSQLHeader, sizeof(wszSQLHeader) / 2, L"INSERT INTO `%s`.`%s` (", wszTableName, wszDBName);
 		for (int iCnt = 0; iCnt < iColumnCnt; ++iCnt)
 		{
@@ -91,47 +87,62 @@ void main()
 		swprintf_s(wszSQLHeader, sizeof(wszSQLHeader) / 2, L"%s`%s`) VALUES (", wszSQLHeader, ColumnName[iColumnCnt]);
 
 		///////////////////////////////////////////////////////////////////////////////////////////////
-		// File Print SQL
+		// SQL 파일 쓰기
+		//
 		///////////////////////////////////////////////////////////////////////////////////////////////
-		// START
-		//  fprintf	- Param에 따른 서식에 맞는 출력. Parsing과정이 들어가 \0을 만난다던가 하면 출력 종료
-		//  fputs	- 한 행의 문자열을 출력. 개행은 하지 않음
-		fputws(L"SET AUTOCOMMIT = 0;\nSTART TRANSACTION; \n", pfSQL);
+		//  fprintf	- 서식에 있는 출력. 파싱하여 \0을 만난다던가 하면 작업 종료
+		//  fputs	- 한 행의 문자열을 출력. 개행 무시
+		
+		// SET AUTOCOMMIT = 0;	// 자동 커밋(명령을 실행하면 그대로 반영) OFF
+		// START TRANSACTION;	// 트랜잭션(구간 내에서 명령어 하나라도 실패하면 롤백) 시작
+		fputws(L"SET AUTOCOMMIT = 0;\nSTART TRANSACTION; \n", pFile_sql);
 
 		int iCnt = 1;
-		while (!feof(pfCSV))
+		while (1)
 		{
-			fgetws(wszRow, df_ROW_LENGTH, pfCSV);
-			ptStart = wszRow;
+			fgetws(wszRow, df_ROW_LEN_MAX, pFile_csv);
+			if (feof(pFile_csv))
+				break;
 
-			fwprintf_s(pfSQL, L"%s", wszSQLHeader);
+			pBeginPos = wszRow;
+
+			// SQL 헤더 붙이기
+			fwprintf_s(pFile_sql, L"%s", wszSQLHeader);
 			while (1)
 			{
-				ptEnd = wcschr(ptStart, L',');
-				if (ptEnd == NULL)
+				pEndPos = wcschr(pBeginPos, L',');
+				if (pEndPos == NULL)
 				{
-					wcsncpy_s(ColumnName[0], sizeof(ColumnName[0]), ptStart, wcschr(ptStart, L'\n') - ptStart);
+					wcsncpy_s(ColumnName[0], sizeof(ColumnName[0]), pBeginPos, wcschr(pBeginPos, L'\n') - pBeginPos);
 					// TODO : Debug :: Column Check
 					//wprintf(L"%s\n", ColumnName[0]);
-					fwprintf_s(pfSQL, L"`%s`);\n", ColumnName[0]);
+					fwprintf_s(pFile_sql, L"`%s`);\n", ColumnName[0]);
 					break;
 				}
-				wcsncpy_s(ColumnName[0], sizeof(ColumnName[0]), ptStart, ptEnd - ptStart);
+				wcsncpy_s(ColumnName[0], sizeof(ColumnName[0]), pBeginPos, pEndPos - pBeginPos);
 				// TODO : Debug :: Column Check
 				//wprintf(L"%s,", ColumnName[0]);
-				fwprintf_s(pfSQL, L"`%s`, ", ColumnName[0]);
-				ptStart = ptEnd + 1;
+				fwprintf_s(pFile_sql, L"`%s`, ", ColumnName[0]);
+				pBeginPos = pEndPos + 1;
 			}
+
+			
 		}
 
-		// END
-		fputws(L"COMMIT;\nSET AUTOCOMMIT = 1;\n\n\n\n", pfSQL);
+		fputws(L"COMMIT;\nSET AUTOCOMMIT = 1;\n\n\n\n", pFile_sql);
 
-		wprintf(L"Convrt SQL Success. Continue? (Y/N)\n");
+
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		// 작업 종료
+		//
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		wprintf(L" - %s creation successful. continue? (Y/N)\n", szName_sql);
 		WCHAR chKey = _getwch();
 		if (chKey == L'n' || chKey == L'N')
 			break;
-
+		
+		fclose(pFile_csv);
+		fclose(pFile_sql);
 	}
-	fclose(pfSQL);
+	
 }

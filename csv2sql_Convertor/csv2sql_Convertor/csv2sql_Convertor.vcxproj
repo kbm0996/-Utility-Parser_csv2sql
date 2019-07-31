@@ -149,6 +149,7 @@
     <None Include="AccountTable.csv" />
     <None Include="AccountTable_test.sql" />
     <None Include="BattleStageTable.csv" />
+    <None Include="battlestagetable_test.sql" />
     <None Include="BattleWaveTable.csv" />
     <None Include="BoosterTable.csv" />
   </ItemGroup>
