@@ -39,7 +39,7 @@
   
   **figure 3. Convertor Run*
  
-    ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/accounttable_test_sql.PNG)
+   ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/accounttable_test_sql.PNG)
   
-  **figure 3. ResultData*
+  **figure 4. ResultData*
  
