@@ -1,20 +1,45 @@
 # *.csv to *.sql Convertor
 ## 📢 개요
- 파싱이란 어떠한 형태의 파일을 읽어서 다른 프로그램이 사용할 수 있는 데이터로 변환하는 것이다.
+ csv(comma-separated variables) 파일은 각각의 값들이 콤마(,;comma)로 분리되어있는 텍스트 파일이다. 오래전부터 스프레드시트나 DB에서 많이 쓰여왔다. 구현이 간단하며 호환되지 않는 포맷을 사용하는 프로그램 간의 자료 전달에 사용한다. 
  
- 엑셀 파일을 R/파이썬에 불러내기 위해 CSV 파일로 변환하고 (수작업), ...
 
-## 💻 Text Parser
+|  <center>연도</center> |  <center>제조사</center> |  <center>모델</center> |  <center>설명</center> |  <center>가격</center> |
+|:--------|:--------|:--------|:--------|:--------|
+|1997 |Ford |E350 |ac, abs, moon |3000.00|
+|1999 |Chevy |Venture "Extended Edition" | |4900.00|
+|1999 |Chevy |Venture "Extended Edition, Very Large" | |5000.00|
+|1996 |Jeep |Grand Cherokee |MUST SELL! <br> air, moon roof, loaded |4799.00|
 
-  ![capture](https://github.com/kbm0996/-Utility-CParser/blob/master/figure/text.png)
+ 스프레드시트에서는 위와 같이 표시되는 테이블을 csv 파일로 변환하면 다음과 같이 표현된다.
+ 
+ ```text
+    연도,제조서,모델,설명,가격
+    1997,Ford,E350,"ac, abs, moon",3000.00
+    1999,Chevy,"Venture ""Extended Edition""","",4900.00
+    1999,Chevy,"Venture ""Extended Edition, Very Large""",,5000.00
+    1996,Jeep,Grand Cherokee,"MUST SELL!
+    air, moon roof, loaded",4799.00
+ ```
+ 
+ 데이터 관리 측면에서도 유리하다. 각종 데이터를 하드코딩으로 프로그램에 박기 보다는 스프레드시트와 같은 외부 파일에 데이터들을 저장하고 관리하는 편이 여러모로 유연성이 높기 때문에 많은 분야에서 사용된다.
+ 
+   ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/ItemExtendedCost.PNG)
   
-  **figure 1. RawData*
+  **figure 1. ItemExtendedCost*
+ 
+ 
 
- 
- 
-## 🅿 사용법 및 예제 코드
+## 💻 csv2sql_Convertor
 
-- **원본 데이터**
+  ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/accounttable_xls.png)
+  
+  **figure 2. RawData*
+
+   ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/run.png)
+  
+  **figure 3. Convertor Run*
  
- Config.ini(텍스트 파일)
-\
+    ![capture](https://github.com/kbm0996/-Utility-csv2sql_Convertor/blob/master/csv2sql_Convertor/jpg/accounttable_test_sql.PNG)
+  
+  **figure 3. ResultData*
+ 
